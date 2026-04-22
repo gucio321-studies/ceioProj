@@ -28,7 +28,7 @@ void read_data() {
     // create histogram
     auto constexpr histMin = 460;
     auto constexpr histMax = 540;
-    TH1F* histogram = new TH1F("histogram", "Mass distribution", 40, histMin, histMax);
+    TH1F* const histogram = new TH1F("histogram", "Mass distribution", 40, histMin, histMax);
     histogram->GetXaxis()->SetTitle("Mass distribution [MeV]");
     histogram->SetMarkerStyle(20);
 
@@ -62,4 +62,13 @@ void read_data() {
     auto const canvas = new TCanvas("canvas", "CEIO Project", 100, 10, 800, 600);
     histogram->Draw();
     fit->Draw("same");
+
+    auto constexpr sigMin = 487;
+    auto constexpr sigMax = 510;
+    auto const signal = new TF1("signal_fit", "gaus", sigMin, sigMax);
+    auto const fitParams = fit->GetParameters();
+    auto const sigParams = new Double_t[3]{fitParams[0], fitParams[1], fitParams[2]};
+    signal->SetParameters(sigParams);
+    auto const background = new TF1("background_fit", "pol2", sigMin, sigMax);
+    auto const bgParams = new Double_t[3]{fitParams[3], fitParams[4], fitParams[5]};
 }
