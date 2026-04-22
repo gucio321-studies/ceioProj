@@ -26,7 +26,9 @@ void read_data() {
     auto numEntries = dataTree->GetEntries();
 
     // create histogram
-    TH1F* histogram = new TH1F("histogram", "Mass distribution", 40, 440, 560);
+    auto constexpr histMin = 460;
+    auto constexpr histMax = 540;
+    TH1F* histogram = new TH1F("histogram", "Mass distribution", 40, histMin, histMax);
     histogram->GetXaxis()->SetTitle("Mass distribution [MeV]");
     histogram->SetMarkerStyle(20);
 
@@ -44,15 +46,20 @@ void read_data() {
 
         auto const vSum  = *v1 + *v2;
         auto const mass = vSum.M();
-        std::cout << mass << std::endl;
         histogram->Fill(mass);
     }
 
     histogram->Sumw2();
 
-    // make fit TODO
+    auto constexpr NORMALIZATION = 0;
+    auto constexpr MEAN = 1;
+    auto fit = new TF1("fit_mass", "gaus(0) + pol2(3)", histMin, histMax);
+    fit->SetParameter(NORMALIZATION, 900);
+    fit->SetParameter(MEAN, 500);
+    histogram->Fit("fit_mass", "RN");
 
     // display results
-    TCanvas* canvas = new TCanvas("canvas", "CEIO Project", 100, 10, 800, 600);
+    auto const canvas = new TCanvas("canvas", "CEIO Project", 100, 10, 800, 600);
     histogram->Draw();
+    fit->Draw("same");
 }
