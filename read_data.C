@@ -27,7 +27,7 @@ void read_data() {
 
     // create histogram
     TH1F* histogram = new TH1F("histogram", "Mass distribution", 40, 440, 560);
-    histogram->GetXaxis()->SetTitle("Mass distribution");
+    histogram->GetXaxis()->SetTitle("Mass distribution [MeV]");
     histogram->SetMarkerStyle(20);
 
     // iterate over data
