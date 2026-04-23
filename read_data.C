@@ -71,4 +71,5 @@ void read_data() {
     signal->SetParameters(sigParams);
     auto const background = new TF1("background_fit", "pol2", sigMin, sigMax);
     auto const bgParams = new Double_t[3]{fitParams[3], fitParams[4], fitParams[5]};
+    background->SetParameters(bgParams);
 }
