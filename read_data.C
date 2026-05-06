@@ -53,7 +53,7 @@ void read_data() {
 
     auto constexpr NORMALIZATION = 0;
     auto constexpr MEAN = 1;
-    auto fit = new TF1("fit_mass", "gaus(0) + pol2(3)", histMin, histMax);
+    auto const fit = new TF1("fit_mass", "gaus(0) + pol2(3)", histMin, histMax);
     fit->SetParameter(NORMALIZATION, 900);
     fit->SetParameter(MEAN, 500);
     histogram->Fit("fit_mass", "RN");
@@ -65,11 +65,18 @@ void read_data() {
 
     auto constexpr sigMin = 487;
     auto constexpr sigMax = 510;
-    auto const signal = new TF1("signal_fit", "gaus", sigMin, sigMax);
+    auto const normalization = histogram->GetBinWidth(0);
+
+    auto const signalFit = new TF1("signal_fit", "gaus", sigMin, sigMax);
     auto const fitParams = fit->GetParameters();
     auto const sigParams = new Double_t[3]{fitParams[0], fitParams[1], fitParams[2]};
-    signal->SetParameters(sigParams);
-    auto const background = new TF1("background_fit", "pol2", sigMin, sigMax);
+    signalFit->SetParameters(sigParams);
+
+    auto const backgroundFit = new TF1("background_fit", "pol2", sigMin, sigMax);
     auto const bgParams = new Double_t[3]{fitParams[3], fitParams[4], fitParams[5]};
-    background->SetParameters(bgParams);
+    backgroundFit->SetParameters(bgParams);
+
+    auto const signal = signalFit->Integral(sigMin, sigMax) / normalization;
+    auto const background = backgroundFit->Integral(sigMin, sigMax) / normalization;
+    printf("Counts:\n\tsignal: %f\n\tbackground: %f\nsignal-background ratio: %f\n", signal, background, signal/background);
 }
