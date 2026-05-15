@@ -56,7 +56,7 @@ void read_data() {
     auto const fit = new TF1("fit_mass", "gaus(0) + pol2(3)", histMin, histMax);
     fit->SetParameter(NORMALIZATION, 900);
     fit->SetParameter(MEAN, 500);
-    histogram->Fit("fit_mass", "RN");
+    auto fitResult = histogram->Fit("fit_mass", "RNS");
 
     // display results
     auto const canvas = new TCanvas("canvas", "CEIO Project", 100, 10, 800, 600);
@@ -65,10 +65,11 @@ void read_data() {
 
     auto constexpr sigMin = 487;
     auto constexpr sigMax = 510;
+    auto const fitParams = fit->GetParameters();
     auto const normalization = histogram->GetBinWidth(0);
+    auto const covarianceMatrix = fitResult->GetCovarianceMatrix();
 
     auto const signalFit = new TF1("signal_fit", "gaus", sigMin, sigMax);
-    auto const fitParams = fit->GetParameters();
     auto const sigParams = new Double_t[3]{fitParams[0], fitParams[1], fitParams[2]};
     signalFit->SetParameters(sigParams);
 
@@ -78,5 +79,30 @@ void read_data() {
 
     auto const signal = signalFit->Integral(sigMin, sigMax) / normalization;
     auto const background = backgroundFit->Integral(sigMin, sigMax) / normalization;
-    printf("Counts:\n\tsignal: %f\n\tbackground: %f\nsignal-background ratio: %f\n", signal, background, signal/background);
+
+    // Uncertainties
+    TMatrixDSym covSig(3);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+           covSig(i,j) = covarianceMatrix(i,j);
+
+    auto const signalError = signalFit->IntegralError(
+        sigMin, sigMax,
+        sigParams,
+        covSig.GetMatrixArray()
+    ) / normalization;
+
+    TMatrixDSym covBg(3);
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+           covBg(i,j) = covarianceMatrix(i+3,j+3);
+
+    auto const backgroundError = backgroundFit->IntegralError(
+        sigMin, sigMax,
+        bgParams,
+        covBg.GetMatrixArray()
+    ) / normalization;
+
+
+    printf("Counts:\n\tsignal: %f +- %f\n\tbackground: %f +- %f\nsignal-background ratio: %f\n", signal,signalError, background, backgroundError, signal/background);
 }
